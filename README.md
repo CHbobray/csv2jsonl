@@ -167,7 +167,7 @@ The benchmarks use synthetic housing data the same size as the real file
 (20,640 rows):
 
 ```bash
-go test -run='^$' -bench=. -benchmem ./jsonlines
+go test -run '^$' -bench . -benchmem ./jsonlines  
 ```
 
 | Version | Time per 20,640 rows | Throughput | Number check |
