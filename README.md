@@ -175,7 +175,7 @@ go test -run '^$' -bench . -benchmem ./jsonlines
 | Version | Time per 20,640 rows | Throughput | Number check |
 | --- | --- | --- | --- |
 | First version (`regexp`) | 21.5 ms | 34 MB/s | 412 ns / 5 values |
-| Final version (hand-written scanner) | **6.2 ms** | **117 MB/s** | **34 ns / 5 values** |
+| Final version (hand-written scanner) | **5.0 ms** | **145 MB/s** | **29 ns / 5 values** |
 
 The first version checked numbers with a regular expression. The benchmark
 pointed to that check as the slowest part, so it was replaced with a short
