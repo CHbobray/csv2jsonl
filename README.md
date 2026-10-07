@@ -138,7 +138,8 @@ rows, err := jsonlines.Convert(csvReader, jsonWriter) // any io.Reader / io.Writ
 go test ./...                      # all unit tests
 go test -v ./...                   # verbose, one line per test
 go test -cover ./...               # coverage summary
-go test -coverprofile=c.out ./... && go tool cover -html=c.out   # coverage report in a browser
+go test -coverprofile c.out ./...    # coverage data
+go tool cover -html c.out            # coverage report in a browser
 ```
 
 What the tests cover:
@@ -161,7 +162,7 @@ What the tests cover:
 - **Command line**: argument checks, quiet mode, deleting partial output, and
   writing profiles.
 
-Coverage is about 93% for the `jsonlines` package and about 81% for `main`.
+Coverage is about 93% for the `jsonlines` package and about 85% for `main`.
 
 ## Performance, benchmarks, and profiling
 
@@ -176,6 +177,10 @@ go test -run '^$' -bench . -benchmem ./jsonlines
 | --- | --- | --- | --- |
 | First version (`regexp`) | 21.5 ms | 34 MB/s | 412 ns / 5 values |
 | Final version (hand-written scanner) | **5.0 ms** | **145 MB/s** | **29 ns / 5 values** |
+
+Final-version numbers were measured on my Windows laptop (13th Gen Intel Core i7-1355U, 
+Go benchmark on 20,640 synthetic rows); first-version numbers come from the development 
+run before the optimization, so the two rows were measured on different machines.
 
 The first version checked numbers with a regular expression. The benchmark
 pointed to that check as the slowest part, so it was replaced with a short
