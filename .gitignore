@@ -1,0 +1,9 @@
+# Build outputs
+csv2jsonl
+csv2jsonl.exe
+csv2jsonl-mac
+
+# Generated files
+*.prof
+*.out
+housesOutput.jl
