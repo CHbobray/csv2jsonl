@@ -61,6 +61,7 @@ type config struct {
 	quiet      bool
 	cpuProfile string
 	memProfile string
+	logPath    string
 }
 
 func main() {
@@ -90,6 +91,12 @@ func run(args []string, stderr io.Writer) error {
 		logger.SetOutput(io.Discard)
 	}
 
+	runLog, closeLog, err := openRunLog(cfg.logPath)
+	if err != nil {
+		return err
+	}
+	defer closeLog()
+
 	if cfg.cpuProfile != "" {
 		stop, err := startCPUProfile(cfg.cpuProfile)
 		if err != nil {
@@ -98,12 +105,16 @@ func run(args []string, stderr io.Writer) error {
 		defer stop()
 	}
 
+	runLog.Info("run started", "input", cfg.inputPath, "output", cfg.outputPath)
 	start := time.Now()
 	rows, err := convertFile(cfg.inputPath, cfg.outputPath)
+	elapsed := time.Since(start)
 	if err != nil {
+		runLog.Error("run failed", "error", err, "rows_written", rows, "duration", elapsed)
 		return err
 	}
-	logger.Printf("wrote %d rows to %s in %v", rows, cfg.outputPath, time.Since(start).Round(time.Microsecond))
+	logRunFinished(runLog, cfg, rows, elapsed)
+	logger.Printf("wrote %d rows to %s in %v", rows, cfg.outputPath, elapsed.Round(time.Microsecond))
 
 	if cfg.memProfile != "" {
 		if err := writeMemProfile(cfg.memProfile); err != nil {
@@ -122,6 +133,7 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 	flags.BoolVar(&cfg.quiet, "q", false, "quiet: don't print the summary line")
 	flags.StringVar(&cfg.cpuProfile, "cpuprofile", "", "write a CPU profile to `file`")
 	flags.StringVar(&cfg.memProfile, "memprofile", "", "write a heap profile to `file`")
+	flags.StringVar(&cfg.logPath, "log", "", "append a timestamped log of this run to `file`")
 	flags.Usage = func() {
 		fmt.Fprint(stderr, usageText)
 		flags.PrintDefaults()

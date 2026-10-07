@@ -8,4 +8,6 @@ csv2jsonl-mac
 *.out
 housesOutput.jl
 
+# Run logs
+*.log
 *.zip

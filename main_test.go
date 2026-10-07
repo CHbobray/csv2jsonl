@@ -108,3 +108,60 @@ func TestRunWritesProfiles(t *testing.T) {
 		}
 	}
 }
+
+func TestRunWritesLog(t *testing.T) {
+	dir := t.TempDir()
+	logPath := filepath.Join(dir, "run.log")
+	args := []string{"-q", "-log", logPath, "testdata/houses_sample.csv", filepath.Join(dir, "out.jl")}
+
+	// Run twice: the log file is appended to, not overwritten.
+	for range 2 {
+		if err := run(args, &bytes.Buffer{}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	content, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logText := string(content)
+	for _, want := range []string{"time=", `msg="run started"`, `msg="run finished"`, "rows=3", "heap_alloc_bytes="} {
+		if !strings.Contains(logText, want) {
+			t.Errorf("log is missing %q:\n%s", want, logText)
+		}
+	}
+	if got := strings.Count(logText, `msg="run finished"`); got != 2 {
+		t.Errorf("found %d finished records, want 2 (log should append)", got)
+	}
+}
+
+func TestRunLogsFailure(t *testing.T) {
+	dir := t.TempDir()
+	inputPath := filepath.Join(dir, "bad.csv")
+	logPath := filepath.Join(dir, "run.log")
+	if err := os.WriteFile(inputPath, []byte("a,b\n1,2,3\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := run([]string{"-log", logPath, inputPath, filepath.Join(dir, "out.jl")}, &bytes.Buffer{}); err == nil {
+		t.Fatal("expected an error")
+	}
+
+	content, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(content), "level=ERROR") || !strings.Contains(string(content), "wrong number of fields") {
+		t.Errorf("failure was not logged:\n%s", content)
+	}
+}
+
+func TestRunRejectsUnwritableLog(t *testing.T) {
+	dir := t.TempDir()
+	logPath := filepath.Join(dir, "missing-dir", "run.log")
+	err := run([]string{"-log", logPath, "testdata/houses_sample.csv", filepath.Join(dir, "out.jl")}, &bytes.Buffer{})
+	if err == nil || !strings.Contains(err.Error(), "opening log file") {
+		t.Errorf("err = %v, want an 'opening log file' error", err)
+	}
+}

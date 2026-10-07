@@ -24,6 +24,7 @@ The first lines of `housesOutput.jl`:
 | --- | --- |
 | `main.go` | Command-line program: argument parsing, input checks, file handling, logging, and optional profiling. |
 | `main_test.go` | Tests for the command line: good runs, bad arguments, cleanup after failure, and profile output. |
+| `runlog.go` | Run logging: writes timestamped start, finish, and failure records with timing and memory statistics. |
 | `jsonlines/convert.go` | Reusable package that does the conversion. It has no dependency on the command line, so other Go programs can import it. |
 | `jsonlines/convert_test.go` | Unit tests, a synthetic-data round-trip test, a fuzz test, and benchmarks. |
 | `testdata/houses_sample.csv` | The first three housing records, used as a test input. |
@@ -107,6 +108,7 @@ Flags:
   -q                 quiet: don't print the summary line
   -cpuprofile file   write a CPU profile to file
   -memprofile file   write a heap profile to file
+  -log file          append a timestamped log of this run to file
   -h                 show help
 ```
 
@@ -189,6 +191,11 @@ go tool pprof -top cpu.prof
 go tool pprof -http=:8080 cpu.prof     # interactive view in a browser
 ```
 
+To keep a timestamped history of runs (timing, file sizes, memory use):
+
+```bash
+./csv2jsonl -log run.log housesInput.csv housesOutput.jl
+```
 ## Code quality tooling
 
 These tools follow the Go Time #237 episode on Go tooling (Ryer, Dogan, and
@@ -242,3 +249,7 @@ I ran `gofmt`, `go vet`, `staticcheck`, and `go test` (all passed), built
 with jsonlint.com, tried invalid inputs to confirm the error messages, ran the
 benchmarks, and updated the README with my own results. I then read through the
 code to understand how it works.
+
+After reviewing the project against the grading guidelines, I asked Claude to add a
+`-log` option for timestamped run logs (`runlog.go` and its tests), which I then tested
+on my machine. I updated the benchmark table myself with results from my own computer.
